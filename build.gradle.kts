@@ -5,7 +5,7 @@ plugins {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
@@ -19,7 +19,7 @@ subprojects {
     apply(plugin = rootProject.libs.plugins.kotlin.get().pluginId)
 
     repositories {
-        maven("https://papermc.io/repo/repository/maven-public/")
+        maven("https://repo.papermc.io/repository/maven-public/")
     }
 
     dependencies {
@@ -33,7 +33,7 @@ subprojects {
 idea {
     module {
         excludeDirs.add(file(".server"))
-        excludeDirs.addAll(allprojects.map { it.buildDir })
+        excludeDirs.addAll(allprojects.map { it.layout.buildDirectory.get().asFile })
         excludeDirs.addAll(allprojects.map { it.file(".gradle") })
     }
 }

@@ -161,6 +161,6 @@ publishing {
 }
 
 signing {
-    isRequired = true
+    isRequired = false
     sign(publishing.publications[rootProject.name])
 }

@@ -28,15 +28,34 @@ internal object KommandLoader {
 
     @Suppress("UNCHECKED_CAST")
     fun <T> loadCompat(type: Class<T>, vararg initArgs: Any? = emptyArray()): T {
-        val packageName = "${type.`package`.name}.internal.compat.$compatVersion"
+        val packageName = type.`package`.name
         val className = "NMS${type.simpleName}"
         val parameterTypes = initArgs.map {
             it?.javaClass
         }.toTypedArray()
 
+        val candidates = ArrayList<String>(2)
+        candidates.add("$packageName.internal.compat.$compatVersion.$className")
+
+        val lastDot = packageName.lastIndexOf('.')
+        if (lastDot > 0) {
+            val superPackageName = packageName.substring(0, lastDot)
+            val subPackageName = packageName.substring(lastDot + 1)
+            candidates.add("$superPackageName.internal.compat.$compatVersion.$subPackageName.$className")
+        }
+
         return try {
-            val nmsClass = Class.forName("$packageName.$className", true, type.classLoader)
-            val constructor = nmsClass.getConstructor(*parameterTypes)
+            val nmsClass = candidates.firstNotNullOfOrNull { candidate ->
+                try {
+                    Class.forName(candidate, true, type.classLoader).asSubclass(type)
+                } catch (exception: ClassNotFoundException) {
+                    null
+                }
+            } ?: throw ClassNotFoundException("Not found nms library class: $candidates")
+            val constructor = kotlin.runCatching {
+                nmsClass.getConstructor(*parameterTypes)
+            }.getOrNull()
+                ?: throw UnsupportedOperationException("${type.name} does not have Constructor for [${parameterTypes.joinToString()}]")
             constructor.newInstance(*initArgs) as T
         } catch (exception: ClassNotFoundException) {
             throw UnsupportedOperationException(

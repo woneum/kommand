@@ -12,7 +12,7 @@ tasks {
         archiveClassifier.set("javadoc")
         dependsOn("dokkaHtml")
 
-        from("$buildDir/dokka/html/") {
+        from(layout.buildDirectory.dir("dokka/html")) {
             include("**")
         }
     }

@@ -56,6 +56,24 @@ class KommandPlugin : JavaPlugin() {
             register("kommand", "kmd", "kmd2") {
                 requires { hasPermission(4) }
 
+                then("score") {
+                    then("score" to score()) {
+                        executes {
+                            val score: String by it
+                            Bukkit.broadcast(text(score))
+                        }
+                    }
+                }
+                then("scores") {
+                    then("scores" to scores()) {
+                        executes {
+                            val scores: Collection<String> by it
+                            scores.forEach {
+                                Bukkit.broadcast(text(it))
+                            }
+                        }
+                    }
+                }
                 then("int") {
                     then("int" to intArgument) {
                         executes {
@@ -327,7 +345,7 @@ class KommandPlugin : JavaPlugin() {
                     val map = mapOf(
                         "apple" to Material.APPLE,
                         "diamond" to Material.DIAMOND,
-                        "grass" to Material.GRASS
+                        "grass" to Material.GRASS_BLOCK
                     )
                     val mapArgument = dynamicByMap(map)
 

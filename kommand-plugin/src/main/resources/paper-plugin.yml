@@ -1,5 +1,5 @@
 name: 'Kommand'
 version: '${version}'
 main: 'io.github.monun.kommand.plugin.KommandPlugin'
-api-version: '${paperVersion}'
+api-version: '1.21.10'
 loader: 'io.github.monun.kommand.plugin.KommandPluginLoader'

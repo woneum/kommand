@@ -51,7 +51,7 @@ tasks {
         archiveAppendix.set("bundle")
         archiveClassifier.set("dev")
 
-        configurations += projectApi.configurations.runtimeClasspath.get()
+        configurations.add(projectApi.configurations.runtimeClasspath.get())
 
         from(sourceSets["main"].output)
         from(projectApi.sourceSets["main"].output)
