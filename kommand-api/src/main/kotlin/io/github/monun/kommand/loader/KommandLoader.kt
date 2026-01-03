@@ -23,7 +23,7 @@ import java.lang.reflect.InvocationTargetException
 
 internal object KommandLoader {
     private val compatVersion by lazy {
-        "v" + Bukkit.getServer().minecraftVersion.replace('.', '_')
+        "v1_21_10"
     }
 
     @Suppress("UNCHECKED_CAST")

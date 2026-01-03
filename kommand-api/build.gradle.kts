@@ -1,16 +1,18 @@
+import org.gradle.kotlin.dsl.register
+
 plugins {
     alias(libs.plugins.dokka)
 }
 
 tasks {
-    create<Jar>("sourcesJar") {
+    register<Jar>("sourcesJar") {
         archiveClassifier.set("sources")
         from(sourceSets["main"].allSource)
     }
 
-    create<Jar>("dokkaJar") {
+    register<Jar>("dokkaJar") {
         archiveClassifier.set("javadoc")
-        dependsOn("dokkaHtml")
+        dependsOn("dokkaGenerateHtml")
 
         from(layout.buildDirectory.dir("dokka/html")) {
             include("**")
