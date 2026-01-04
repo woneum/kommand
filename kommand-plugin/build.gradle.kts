@@ -1,14 +1,12 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
-plugins {
-    alias(libs.plugins.shadow)
-}
+import org.gradle.configurationcache.extensions.capitalized
 
 dependencies {
     implementation(projectApi)
 }
 
 extra.apply {
+    set("pluginName", rootProject.name.split('-').joinToString("") { it.capitalize() })
+    set("packageName", rootProject.name.replace("-", ""))
     set("kotlinVersion", libs.versions.kotlin)
     set("paperVersion", libs.versions.paper.get().split('.').take(2).joinToString(separator = "."))
 }
@@ -21,49 +19,54 @@ tasks {
         }
     }
 
-    fun Jar.copyToServer(suffix: String) = doLast {
-        val pluginsFolder = rootProject.file(".server/plugins-$suffix")
-        val updateFolder = pluginsFolder.resolve("update")
+    fun registerJar(
+        classifier: String,
+        bundleProject: Project? = null,
+        bundleTask: TaskProvider<org.gradle.jvm.tasks.Jar>? = null
+    ) = register<Jar>("${classifier}Jar") {
+        archiveBaseName.set(rootProject.name)
+        archiveClassifier.set(classifier)
 
-        copy {
-            from(archiveFile)
+        from(sourceSets["main"].output)
 
-            // archiveBaseName 으로 시작하는 파일이 존재하면 update 폴더에 복사
-            if (pluginsFolder.listFiles()?.any { it.name.startsWith(archiveBaseName.get()) } == true) {
-                into(pluginsFolder.resolve("update"))
+        if (bundleProject != null) from(bundleProject.sourceSets["main"].output)
+
+        if (bundleTask != null) {
+            bundleTask.let { bundleJar ->
+                dependsOn(bundleJar)
+                from(zipTree(bundleJar.get().archiveFile))
+            }
+            exclude("clip.yml")
+            rename("bundle.yml", "plugin.yml")
+        } else {
+            exclude("bundle.yml")
+            rename("clip.yml", "plugin.yml")
+        }
+    }.also { jar ->
+        register<Copy>("test${classifier.capitalize()}Jar") {
+            val prefix = rootProject.name
+            val plugins = rootProject.file(".server/plugins-$classifier")
+            val update = File(plugins, "update")
+            val regex = Regex("($prefix)(.*)(\\.jar)")
+
+            from(jar)
+
+            if (plugins.list()?.any { regex.matches(it) } == true) {
+                into(update)
             } else {
-                into(pluginsFolder)
+                into(plugins)
+            }
+
+            doLast {
+                update.mkdirs()
+                File(update, "RELOAD").delete()
             }
         }
-
-        updateFolder.resolve("RELOAD").delete()
     }
 
-    register<Jar>("clipPluginJar") {
-        archiveAppendix.set("clip")
-
-        from(sourceSets["main"].output)
-
-        copyToServer("clip")
-    }
-
-    register<ShadowJar>("devBundlePluginJar") {
-        archiveAppendix.set("bundle")
-        archiveClassifier.set("dev")
-
-        configurations.add(projectApi.configurations.runtimeClasspath.get())
-
-        from(sourceSets["main"].output)
-        from(projectApi.sourceSets["main"].output)
-        from(projectCore.sourceSets["main"].output)
-
-        projectCore.subprojects.forEach { compat ->
-            val reobfJar = compat.tasks["reobfJar"]
-            dependsOn(reobfJar)
-
-            from(compat.sourceSets["main"].output)
-        }
-
-        copyToServer("bundle")
-    }
+    registerJar("dev", projectApi, coreDevJar)
+    registerJar("reobf", projectApi, coreReobfJar)
+    registerJar("clip")
 }
+
+fun String.capitalize(): String = replaceFirstChar { it.uppercase() }

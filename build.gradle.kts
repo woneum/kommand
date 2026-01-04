@@ -1,6 +1,7 @@
 plugins {
     idea
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.dokka)
 }
 
 java {
@@ -27,6 +28,28 @@ subprojects {
 
         implementation(kotlin("stdlib"))
         implementation(kotlin("reflect"))
+    }
+}
+
+listOf("api", "core").forEach { projectName ->
+    project(":${rootProject.name}-$projectName") {
+        apply(plugin = "org.jetbrains.dokka")
+
+        tasks {
+            register<Jar>("sourcesJar") {
+                archiveClassifier.set("sources")
+                from(sourceSets["main"].allSource)
+            }
+
+            register<Jar>("dokkaJar") {
+                archiveClassifier.set("javadoc")
+                dependsOn("dokkaGenerateHtml")
+
+                from(layout.buildDirectory.dir("dokka/html/")) {
+                    include("**")
+                }
+            }
+        }
     }
 }
 

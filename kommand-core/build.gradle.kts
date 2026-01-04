@@ -1,41 +1,17 @@
-plugins {
-    alias(libs.plugins.paperweight) apply false
-}
-
 dependencies {
-    implementation(projectApi)
+    api(projectApi)
 }
 
-//tasks {
-//    register<Jar>("devJar") {
-//        archiveClassifier.set("dev")
-//
-//        from(sourceSets["main"].output)
-//        subprojects {
-//            from(sourceSets["main"].output)
-//        }
-//    }
-//
-//    register<Jar>("reobfJar") {
-//        archiveClassifier.set("reobf")
-//
-//        from(sourceSets["main"].output)
-//        subprojects {
-//            val reobfJar = tasks.named("reobfJar").get() as io.papermc.paperweight.tasks.RemapJar
-//            dependsOn(reobfJar)
-//            from(zipTree(reobfJar.outputJar))
-//        }
-//    }
-//}
+tasks {
+    jar {
+        archiveClassifier.set("origin")
+    }
 
-subprojects {
-    apply(plugin = rootProject.libs.plugins.paperweight.get().pluginId)
-    dependencies {
-        implementation(projectApi)
-        implementation(projectCore)
+    register<Jar>("coreDevJar") {
+        from(sourceSets["main"].output)
+    }
 
-        val paperweight = (this as ExtensionAware).extensions.getByName("paperweight")
-                as io.papermc.paperweight.userdev.PaperweightUserDependenciesExtension
-        paperweight.paperDevBundle("${name.substring(1)}-R0.1-SNAPSHOT")
+    register<Jar>("coreReobfJar") {
+        from(sourceSets["main"].output)
     }
 }
